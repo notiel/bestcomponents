@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from openpyxl import Workbook
 from openpyxl import load_workbook
 
+
 @dataclass
 class Product:
     id: str
@@ -22,6 +23,7 @@ class Product:
     prices_actual: dict
     prices_delivery: dict
     partnumber: str
+
 
 terra_base = r"https://www.terraelectronica.ru/"
 onelec_base = r'https://onelec.ru/products/'
@@ -48,9 +50,12 @@ def get_search_links_for_position(cathegory: str, value: str, footprint: str) ->
         if 'u' or 'n' in value:
             search_links = get_search_links_from_page(position + ' x7r')
             search_links.extend(get_search_links_from_page(position + ' x5r'))
+    new_links = []
     for link in search_links:
         if '0603' in position:
-            link = correct_link_for_0603(link)
+            new_links.append(correct_link_for_0603(link))
+        else:
+            new_links.append(link)
     return search_links
 
 
@@ -258,8 +263,7 @@ def get_min_price_quantity_data(products: [Product], quantity: int, date: int) -
         return min_delivery_price, min_delivery_id, min_delivery_prognosis
 
 
-
-def get_terra_by_pn(partnumber:str) -> (float, str):
+def get_terra_by_pn(partnumber: str) -> (float, str):
     """
     gets data from terra by partnumber
     :param partnumber:
@@ -303,8 +307,8 @@ def get_onelec_pn(partnumber: str) -> (float, str):
                         if onelec_price == 0:
                             onelec_price = price
                         else:
-                           if price < onelec_price:
-                               onelec_price = price
+                            if price < onelec_price:
+                                onelec_price = price
                 except ValueError:
                     continue
         except AttributeError:
@@ -338,6 +342,7 @@ def get_PN_from_terra(url: str):
     pn = soup.find('h1')
     return pn.contents[0].split()[0]
 
+
 def get_best_price_by_PN(value: str) -> (float, str):
     """
     function gets best price from terra searhing by PN
@@ -356,7 +361,7 @@ def get_best_price_by_PN(value: str) -> (float, str):
     else:
         get_product_data(link.split('ru/')[1], products)
     if products:
-        best_price, best_url, _ =  get_min_price_quantity_data(products, 1, 5)
+        best_price, best_url, _ = get_min_price_quantity_data(products, 1, 5)
         best_url = terra_base + 'product/' + best_url
         if best_url:
             PN = get_PN_from_terra(best_url)
@@ -385,8 +390,8 @@ def write_results(results: dict):
         ws1['A%i' % i] = value
         ws1['B%i' % i] = results[value][0]
         ws1['C%i' % i] = results[value][1]
-        i+=1
-    wb.save(filename = 'Results.xlsx')
+        i += 1
+    wb.save(filename='Results.xlsx')
 
 
 def main(filename, start=1, end=100):
@@ -397,7 +402,7 @@ def main(filename, start=1, end=100):
         value = sheet['A%i' % i].value
         component = sheet['B%i' %i].value
         footprint = sheet['C%i' %i].value
-        PN = sheet['D%i' %i].value
+        PN = sheet['D%i' % i].value
         if component == "CAP" or component == 'RES':
             search_links = get_search_links_for_position(component, value, footprint)
             if search_links:
@@ -421,9 +426,6 @@ def main(filename, start=1, end=100):
             results[value] = [-1, ""]
         write_results(results)
         print(value, results[value])
-    #write_results(results)
-
-
 
 
 if __name__ == '__main__':
@@ -431,5 +433,3 @@ if __name__ == '__main__':
         print('Please specify file name (necessary) and range (start and end line, optional)')
     else:
         main(*sys.argv[1:])
-
-
