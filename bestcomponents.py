@@ -327,6 +327,17 @@ def get_best_price_from_onelec_terra_by_pn(partnumber: str)->(float, str, str):
     return terra_price, terra_url, onelec_url + ' ' + str(onelec_price)
 
 
+def get_PN_from_terra(url: str):
+    """
+    gets PN from terra using product linf
+    :param url: link at product
+    :return: Partnumber
+    """
+    res = requests.get(url)
+    soup = BeautifulSoup(res.text)
+    pn = soup.find('h1')
+    return pn.contents[0].split()[0]
+
 def get_best_price_by_PN(value: str) -> (float, str):
     """
     function gets best price from terra searhing by PN
@@ -346,6 +357,12 @@ def get_best_price_by_PN(value: str) -> (float, str):
         get_product_data(link.split('ru/')[1], products)
     if products:
         best_price, best_url, _ =  get_min_price_quantity_data(products, 1, 5)
+        best_url = terra_base + 'product/' + best_url
+        if best_url:
+            PN = get_PN_from_terra(best_url)
+            price_onelec, url_onelec = get_onelec_pn(PN.lower())
+            if price_onelec > 0 and price_onelec < best_price:
+                best_price = price_onelec, best_url = url_onelec
         return best_price, best_url
     else:
         return -1, ""
@@ -397,12 +414,13 @@ def main(filename, start=1, end=100):
             else:
                 results[value] = [-1, best_url]
         if component == 'PN':
-            best_price, best_price_id = get_best_price_by_PN(value)
-            results[value] = [best_price, terra_base + "product/" + best_price_id]
+            best_price, best_price_url = get_best_price_by_PN(value)
+            results[value] = [best_price, best_price_url]
         if value not in results.keys():
             results[value] = [-1, ""]
+        write_results(results)
         print(value, results[value])
-    write_results(results)
+    #write_results(results)
 
 
 
