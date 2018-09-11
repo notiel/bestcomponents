@@ -362,7 +362,8 @@ def get_best_price_by_PN(value: str) -> (float, str):
             PN = get_PN_from_terra(best_url)
             price_onelec, url_onelec = get_onelec_pn(PN.lower())
             if price_onelec > 0 and price_onelec < best_price:
-                best_price = price_onelec, best_url = url_onelec
+                best_price = price_onelec
+                best_url = url_onelec
         return best_price, best_url
     else:
         return -1, ""
@@ -406,7 +407,7 @@ def main(filename, start=1, end=100):
             if products:
                 quantity = 1
                 best_price, best_price_id, _ = get_min_price_quantity_data(products, quantity, 5)
-                results[value] = [best_price, terra_base + best_price_id]
+                results[value] = [best_price, terra_base + 'product/' +  best_price_id]
         if PN:
             best_price, best_url, comment = get_best_price_from_onelec_terra_by_pn(PN)
             if best_price != 0:
