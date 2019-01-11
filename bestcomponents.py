@@ -1,5 +1,5 @@
 import httplib2
-import apiclient.discovery
+import googleapiclient.discovery
 from oauth2client.service_account import ServiceAccountCredentials
 import sys
 
@@ -404,15 +404,18 @@ def main(filename, start=1, end=100):
         footprint = sheet['C%i' %i].value
         PN = sheet['D%i' % i].value
         if component == "CAP" or component == 'RES':
-            search_links = get_search_links_for_position(component, value, footprint)
-            if search_links:
-                products = []
-                for link in search_links:
-                    get_product_data(link, products)
-            if products:
-                quantity = 1
-                best_price, best_price_id, _ = get_min_price_quantity_data(products, quantity, 5)
-                results[value] = [best_price, terra_base + 'product/' +  best_price_id]
+            try:
+                search_links = get_search_links_for_position(component, value, footprint)
+                if search_links:
+                    products = []
+                    for link in search_links:
+                        get_product_data(link, products)
+                if products:
+                    quantity = 1
+                    best_price, best_price_id, _ = get_min_price_quantity_data(products, quantity, 5)
+                    results[value] = [best_price, terra_base + 'product/' +  best_price_id]
+            except (AttributeError, IndexError):
+                results[value] = [-1, "Error"]
         if PN:
             best_price, best_url, comment = get_best_price_from_onelec_terra_by_pn(PN)
             if best_price != 0:
@@ -420,8 +423,11 @@ def main(filename, start=1, end=100):
             else:
                 results[value] = [-1, best_url]
         if component == 'PN':
-            best_price, best_price_url = get_best_price_by_PN(value)
-            results[value] = [best_price, best_price_url]
+            try:
+                best_price, best_price_url = get_best_price_by_PN(value)
+                results[value] = [best_price, best_price_url]
+            except (AttributeError, UnboundLocalError):
+                results[value] = [-1, ""]
         if value not in results.keys():
             results[value] = [-1, ""]
         write_results(results)
